@@ -9,7 +9,6 @@
   <link rel="stylesheet" href="math-quest.css">
 </head>
 <body>
-  <!-- Header -->
   <header class="main-header">
     <div class="header-inner">
       <div class="brand">
@@ -28,7 +27,6 @@
     </div>
   </header>
 
-  <!-- Map container -->
   <main class="map-container">
     <h2 style="text-align:center; font-family: 'Fredoka', sans-serif; color: var(--primary-dark);">🗺️ Quest Map</h2>
     <p style="text-align:center;">Choose a location to begin a puzzle chain. Complete it to unlock a Treasure Piece and discover a creature!</p>
@@ -36,14 +34,12 @@
     <div id="treasureStatus" style="text-align:center; margin-top: 2rem;"></div>
   </main>
 
-  <!-- Footer -->
   <footer class="main-footer">
     <p>© 2026 Math Quest · Adventure awaits!</p>
   </footer>
 
-  <!-- Map logic directly in this page (no dependency on math-quest.js) -->
   <script>
-    // ----- Creature & Location data (same as in math-quest.js) -----
+    // ----- Creature & Location data -----
     const MAP_LOCATIONS = [
       { id: 'crystal-cave', name: 'Crystal Cave', icon: '💎', classLevel: '3', topic: 'arithmetic', chainLength: 5, creature: { name: 'Glowbat', emoji: '🦇', fact: 'This bat uses echolocation to find prime numbers!' } },
       { id: 'muddy-swamp', name: 'Muddy Swamp', icon: '🐸', classLevel: '3', topic: 'area-rectangle', chainLength: 5, creature: { name: 'Mudpuppy', emoji: '🐶', fact: 'It can sense right angles with its whiskers!' } },
@@ -57,7 +53,13 @@
 
     // ----- Helpers (localStorage) -----
     function getUnlockedLocations() {
-      return JSON.parse(localStorage.getItem('unlockedLocations')) || [];
+      const stored = localStorage.getItem('unlockedLocations');
+      if (!stored) {
+        // First time visitor: unlock Crystal Cave automatically
+        localStorage.setItem('unlockedLocations', '["crystal-cave"]');
+        return ['crystal-cave'];
+      }
+      return JSON.parse(stored);
     }
 
     // ----- Render map grid -----
