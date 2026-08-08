@@ -37,8 +37,40 @@
     <p>© 2026 Math Quest · Gotta discover 'em all!</p>
   </footer>
 
-  <script src="math-quest.js"></script>
   <script>
+    // ----- Creature data (same as map) -----
+    const CREATURES = [
+      { name: 'Glowbat', emoji: '🦇', fact: 'This bat uses echolocation to find prime numbers!' },
+      { name: 'Mudpuppy', emoji: '🐶', fact: 'It can sense right angles with its whiskers!' },
+      { name: 'Vine Snake', emoji: '🐍', fact: 'Its scales are perfect fractals.' },
+      { name: 'Sun Phoenix', emoji: '🐦‍🔥', fact: 'Rebirths when you solve a geometry problem.' },
+      { name: 'Echo Fox', emoji: '🦊', fact: 'It repeats your answer, then tells you if it’s right.' },
+      { name: 'Lavahorn', emoji: '🐲', fact: 'It can calculate the percent of lava in its belly.' },
+      { name: 'Bookwyrm', emoji: '🐉', fact: 'It eats quadratic equations for breakfast.' },
+      { name: 'Celestial Turtle', emoji: '🐢', fact: 'Its shell contains a map of the stars.' }
+    ];
+
+    function getDiscoveredCreatures() {
+      return JSON.parse(localStorage.getItem('discoveredCreatures')) || [];
+    }
+
+    function renderFieldGuide() {
+      const grid = document.getElementById('guideGrid');
+      const discovered = getDiscoveredCreatures();
+      grid.innerHTML = '';
+      CREATURES.forEach(creature => {
+        const isDiscovered = discovered.includes(creature.name);
+        const card = document.createElement('div');
+        card.className = 'guide-card' + (isDiscovered ? ' discovered' : '');
+        card.innerHTML = `
+          <div class="creature-img">${isDiscovered ? creature.emoji : '❓'}</div>
+          <div class="creature-name">${isDiscovered ? creature.name : '???'}</div>
+          ${isDiscovered ? `<div class="creature-fact">${creature.fact}</div>` : ''}
+        `;
+        grid.appendChild(card);
+      });
+    }
+
     renderFieldGuide();
   </script>
 </body>
