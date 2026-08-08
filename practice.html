@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Math Quest – Practice</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="math-quest.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="main-header">
+    <div class="header-inner">
+      <div class="brand">
+        <span class="mascot">🦊</span>
+        <div>
+          <h1>Math Quest</h1>
+          <span class="tag" id="welcomeMsg">Solve it. Earn it. Level up.</span>
+        </div>
+      </div>
+      <nav class="nav">
+        <a href="index.html">Home</a>
+        <a href="practice.html" class="active">Practice</a>
+        <a href="#" onclick="alert('Coming soon!')">Leaderboard</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Game container -->
+  <div class="wrap">
+    <!-- Theme toggle + HUD -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 18px; flex-wrap:wrap; gap:10px;">
+      <button id="themeToggle" class="btn btn-secondary">🌿 Switch to Jungle</button>
+      <div class="hud" style="display:flex; gap:12px;">
+        <div class="hud-pill">⏱ <span id="timerText">20</span>s</div>
+        <div class="hud-pill">🪙 <span id="scoreText">0</span></div>
+        <div class="hud-pill">💰 <span id="totalCoinsText">0</span></div>
+      </div>
+    </div>
+
+    <div class="class-picker" id="classPicker">
+      <button class="class-chip" data-class="3">Class 3</button>
+      <button class="class-chip" data-class="5">Class 5</button>
+      <button class="class-chip" data-class="8">Class 8</button>
+      <button class="class-chip" data-class="10">Class 10</button>
+    </div>
+
+    <div class="torch-track"><div class="torch-fill" id="torchFill"></div></div>
+
+    <div class="scroll-card">
+      <div>
+        <div class="q-text" id="qText">Pick a class to begin your quest!</div>
+      </div>
+    </div>
+
+    <div class="options" id="optionsGrid"></div>
+
+    <div class="chest-zone" id="chestZone"></div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="newQBtn">🎲 New Question</button>
+      <button class="btn btn-secondary" id="submitBtn" disabled>✅ Submit</button>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+    <div class="solution" id="solution"></div>
+
+    <div class="trail-label">Your quest trail</div>
+    <div class="trail" id="trail"></div>
+  </div>
+
+  <footer class="main-footer">
+    <p>© 2026 Math Quest · Keep practicing!</p>
+  </footer>
+
+  <script src="math-quest.js"></script>
+</body>
+</html>
