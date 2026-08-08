@@ -29,8 +29,8 @@
 
   <main class="guide-container">
     <h2 style="text-align:center; font-family: 'Fredoka', sans-serif;">📖 Explorer’s Field Guide</h2>
-    <p style="text-align:center;">Unlock locations on the map to discover these rare jungle creatures.</p>
-    <div id="emptyMessage" style="text-align:center; margin:2rem; font-size:1.1rem;"></div>
+    <p style="text-align:center;">Earn coins on the <a href="practice.html">Practice</a> page to unlock creatures!</p>
+    <div id="emptyMessage" style="text-align:center; margin:1rem;"></div>
     <div id="guideGrid" class="guide-grid"></div>
   </main>
 
@@ -40,30 +40,35 @@
 
   <script>
     const CREATURES = [
-      { name: 'Glowbat', emoji: '🦇', fact: 'This bat uses echolocation to find prime numbers!' },
-      { name: 'Mudpuppy', emoji: '🐶', fact: 'It can sense right angles with its whiskers!' },
-      { name: 'Vine Snake', emoji: '🐍', fact: 'Its scales are perfect fractals.' },
-      { name: 'Sun Phoenix', emoji: '🐦‍🔥', fact: 'Rebirths when you solve a geometry problem.' },
-      { name: 'Echo Fox', emoji: '🦊', fact: 'It repeats your answer, then tells you if it’s right.' },
-      { name: 'Lavahorn', emoji: '🐲', fact: 'It can calculate the percent of lava in its belly.' },
-      { name: 'Bookwyrm', emoji: '🐉', fact: 'It eats quadratic equations for breakfast.' },
-      { name: 'Celestial Turtle', emoji: '🐢', fact: 'Its shell contains a map of the stars.' }
+      { name: 'Glowbat', emoji: '🦇', fact: 'This bat uses echolocation to find prime numbers!', coins: 10 },
+      { name: 'Mudpuppy', emoji: '🐶', fact: 'It can sense right angles with its whiskers!', coins: 25 },
+      { name: 'Vine Snake', emoji: '🐍', fact: 'Its scales are perfect fractals.', coins: 50 },
+      { name: 'Sun Phoenix', emoji: '🐦‍🔥', fact: 'Rebirths when you solve a geometry problem.', coins: 80 },
+      { name: 'Echo Fox', emoji: '🦊', fact: 'It repeats your answer, then tells you if it’s right.', coins: 120 },
+      { name: 'Lavahorn', emoji: '🐲', fact: 'It can calculate the percent of lava in its belly.', coins: 170 },
+      { name: 'Bookwyrm', emoji: '🐉', fact: 'It eats quadratic equations for breakfast.', coins: 230 },
+      { name: 'Celestial Turtle', emoji: '🐢', fact: 'Its shell contains a map of the stars.', coins: 300 }
     ];
 
     function getDiscoveredCreatures() {
       return JSON.parse(localStorage.getItem('discoveredCreatures')) || [];
+    }
+    function getTotalCoins() {
+      return parseInt(localStorage.getItem('mathQuestTotalCoins')) || 0;
     }
 
     function renderFieldGuide() {
       const grid = document.getElementById('guideGrid');
       const emptyMsg = document.getElementById('emptyMessage');
       const discovered = getDiscoveredCreatures();
+      const totalCoins = getTotalCoins();
 
-      // Show a friendly message if nothing discovered
-      if (discovered.length === 0) {
-        emptyMsg.innerHTML = '🌿 You haven’t discovered any creatures yet.<br>Complete a puzzle chain on the <a href="map.html">Quest Map</a> to find your first one!';
+      // Find next creature to unlock
+      const next = CREATURES.find(c => !discovered.includes(c.name));
+      if (next) {
+        emptyMsg.innerHTML = `🔒 Next creature: ${next.emoji} ${next.name} — you need <strong>${next.coins} coins</strong>. You have ${totalCoins} coins.`;
       } else {
-        emptyMsg.innerHTML = `You’ve discovered ${discovered.length} of ${CREATURES.length} creatures. Keep exploring!`;
+        emptyMsg.innerHTML = '🎉 You have discovered all creatures!';
       }
 
       grid.innerHTML = '';
@@ -73,7 +78,7 @@
         card.className = 'guide-card' + (isDiscovered ? ' discovered' : '');
         card.innerHTML = `
           <div class="creature-img">${isDiscovered ? creature.emoji : '❓'}</div>
-          <div class="creature-name">${isDiscovered ? creature.name : '???'}</div>
+          <div class="creature-name">${isDiscovered ? creature.name : `${creature.coins} 🪙`}</div>
           ${isDiscovered ? `<div class="creature-fact">${creature.fact}</div>` : ''}
         `;
         grid.appendChild(card);

@@ -5,7 +5,7 @@
   let currentQuestion = "";
   let timeLeft = TIME_LIMIT;
   let timerId = null;
-  let sessionScore = 0;        // coins earned this session (displayed)
+  let sessionScore = 0;
   let history = [];
   let locked = true;
 
@@ -28,63 +28,123 @@
   const welcomeMsg = document.getElementById('welcomeMsg');
   const questProgressDiv = document.getElementById('questProgress');
 
+  // Balloon container (create if not exists)
+  let balloonContainer = document.getElementById('balloon-container');
+  if (!balloonContainer) {
+    balloonContainer = document.createElement('div');
+    balloonContainer.id = 'balloon-container';
+    document.body.appendChild(balloonContainer);
+  }
+
+  // Sound effects (Web Audio API)
+  let audioCtx = null;
+  function initAudio() {
+    if (audioCtx) return;
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+
+  function playSound(type) {
+    if (!audioCtx) initAudio();
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    if (type === 'correct') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523.25, now);
+      osc.frequency.setValueAtTime(659.25, now + 0.1);
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+      osc.start(now);
+      osc.stop(now + 0.4);
+    } else if (type === 'wrong') {
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(150, now);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+      osc.start(now);
+      osc.stop(now + 0.5);
+    } else if (type === 'discover') {
+      const notes = [523.25, 659.25, 783.99, 1046.5];
+      notes.forEach((freq, i) => {
+        const osc2 = audioCtx.createOscillator();
+        const gain2 = audioCtx.createGain();
+        osc2.connect(gain2);
+        gain2.connect(audioCtx.destination);
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(freq, now + i * 0.15);
+        gain2.gain.setValueAtTime(0.2, now + i * 0.15);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + i * 0.15 + 0.3);
+        osc2.start(now + i * 0.15);
+        osc2.stop(now + i * 0.15 + 0.3);
+      });
+    }
+  }
+
+  // Balloon animation
+  function spawnBalloons(count) {
+    for (let i = 0; i < count; i++) {
+      const balloon = document.createElement('div');
+      balloon.className = 'balloon';
+      balloon.textContent = '🎈';
+      balloon.style.left = Math.random() * 100 + '%';
+      balloon.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+      balloonContainer.appendChild(balloon);
+      setTimeout(() => balloon.remove(), 3000);
+    }
+  }
+
+  // Coin thresholds for creatures
+  const CREATURE_THRESHOLDS = [
+    { name: 'Glowbat', emoji: '🦇', fact: 'This bat uses echolocation to find prime numbers!', coins: 10 },
+    { name: 'Mudpuppy', emoji: '🐶', fact: 'It can sense right angles with its whiskers!', coins: 25 },
+    { name: 'Vine Snake', emoji: '🐍', fact: 'Its scales are perfect fractals.', coins: 50 },
+    { name: 'Sun Phoenix', emoji: '🐦‍🔥', fact: 'Rebirths when you solve a geometry problem.', coins: 80 },
+    { name: 'Echo Fox', emoji: '🦊', fact: 'It repeats your answer, then tells you if it’s right.', coins: 120 },
+    { name: 'Lavahorn', emoji: '🐲', fact: 'It can calculate the percent of lava in its belly.', coins: 170 },
+    { name: 'Bookwyrm', emoji: '🐉', fact: 'It eats quadratic equations for breakfast.', coins: 230 },
+    { name: 'Celestial Turtle', emoji: '🐢', fact: 'Its shell contains a map of the stars.', coins: 300 }
+  ];
+
+  function getDiscoveredCreatures() {
+    return JSON.parse(localStorage.getItem('discoveredCreatures')) || [];
+  }
+
+  function discoverCreature(creatureName) {
+    let creatures = getDiscoveredCreatures();
+    if (!creatures.includes(creatureName)) {
+      creatures.push(creatureName);
+      localStorage.setItem('discoveredCreatures', JSON.stringify(creatures));
+    }
+  }
+
+  // Check and unlock creatures based on coins
+  function checkCoinUnlocks() {
+    const discovered = getDiscoveredCreatures();
+    let newDiscovery = null;
+    CREATURE_THRESHOLDS.forEach(creature => {
+      if (totalCoins >= creature.coins && !discovered.includes(creature.name)) {
+        discoverCreature(creature.name);
+        if (!newDiscovery) newDiscovery = creature;
+      }
+    });
+    if (newDiscovery) {
+      setTimeout(() => {
+        alert(`🎉 You discovered ${newDiscovery.emoji} ${newDiscovery.name}! Check your Field Guide.`);
+        playSound('discover');
+        spawnBalloons(15);
+      }, 500);
+    }
+  }
+
   // Set welcome message
   const playerName = localStorage.getItem('mathQuestName') || 'Math Explorer';
   welcomeMsg.textContent = `Welcome, ${playerName}!`;
 
   // Display total coins
   totalCoinsText.textContent = totalCoins;
-
-  // ----- NEW: Quest Map & Puzzle Chains -----
-  const MAP_LOCATIONS = [
-    { id: 'crystal-cave', name: 'Crystal Cave', icon: '💎', classLevel: '3', topic: 'arithmetic', chainLength: 5, creature: { name: 'Glowbat', emoji: '🦇', fact: 'This bat uses echolocation to find prime numbers!' } },
-    { id: 'muddy-swamp', name: 'Muddy Swamp', icon: '🐸', classLevel: '3', topic: 'area-rectangle', chainLength: 5, creature: { name: 'Mudpuppy', emoji: '🐶', fact: 'It can sense right angles with its whiskers!' } },
-    { id: 'vine-bridge', name: 'Vine Bridge', icon: '🌿', classLevel: '5', topic: 'fractions', chainLength: 5, creature: { name: 'Vine Snake', emoji: '🐍', fact: 'Its scales are perfect fractals.' } },
-    { id: 'sky-temple', name: 'Sky Temple', icon: '🏛️', classLevel: '5', topic: 'area-triangle', chainLength: 5, creature: { name: 'Sun Phoenix', emoji: '🐦‍🔥', fact: 'Rebirths when you solve a geometry problem.' } },
-    { id: 'echoing-gorge', name: 'Echoing Gorge', icon: '🏞️', classLevel: '8', topic: 'linear', chainLength: 5, creature: { name: 'Echo Fox', emoji: '🦊', fact: 'It repeats your answer, then tells you if it’s right.' } },
-    { id: 'volcano-peak', name: 'Volcano Peak', icon: '🌋', classLevel: '8', topic: 'percentages', chainLength: 5, creature: { name: 'Lavahorn', emoji: '🐲', fact: 'It can calculate the percent of lava in its belly.' } },
-    { id: 'ancient-library', name: 'Ancient Library', icon: '📚', classLevel: '10', topic: 'quadratic', chainLength: 5, creature: { name: 'Bookwyrm', emoji: '🐉', fact: 'It eats quadratic equations for breakfast.' } },
-    { id: 'star-observatory', name: 'Star Observatory', icon: '🔭', classLevel: '10', topic: 'area-circle', chainLength: 5, creature: { name: 'Celestial Turtle', emoji: '🐢', fact: 'Its shell contains a map of the stars.' } }
-  ];
-
-  // Map topic to generator function
-  function getGeneratorForTopic(topic) {
-    switch(topic) {
-      case 'arithmetic': return (level) => genArithmetic(level);
-      case 'area-rectangle': return genAreaRectangle;
-      case 'area-triangle': return genAreaTriangle;
-      case 'area-circle': return genAreaCircle;
-      case 'fractions': return genFractionAdd;
-      case 'percentages': return genPercent;
-      case 'linear': return genLinear;
-      case 'quadratic': return genQuadratic;
-      default: return (level) => genArithmetic(level);
-    }
-  }
-
-  // Active quest state (if started from map)
-  let activeQuest = null;
-  const urlParams = new URLSearchParams(window.location.search);
-  const mapNodeId = urlParams.get('mapNode');
-
-  // If we came from map with a node, set up quest
-  if (mapNodeId) {
-    const location = MAP_LOCATIONS.find(loc => loc.id === mapNodeId);
-    if (location) {
-      activeQuest = {
-        locationId: location.id,
-        chainLength: location.chainLength,
-        topic: location.topic,
-        correctCount: 0,
-        creature: location.creature,
-        classLevel: location.classLevel
-      };
-      // Hide class picker because topic is fixed
-      document.querySelector('.class-picker').style.display = 'none';
-      qText.textContent = `Quest: ${location.name} - Solve 5 ${location.topic} problems!`;
-      startNewQuestion(true);
-    }
-  }
 
   // Theme toggle
   const themeToggle = document.getElementById('themeToggle');
@@ -93,7 +153,6 @@
     document.body.classList.add('jungle');
     themeToggle.textContent = '☀️ Switch to Education';
   }
-
   themeToggle.addEventListener('click', () => {
     document.body.classList.toggle('jungle');
     const isJungle = document.body.classList.contains('jungle');
@@ -101,7 +160,7 @@
     localStorage.setItem('mathQuestTheme', isJungle ? 'jungle' : 'education');
   });
 
-  // Class chip listeners (only if not in quest mode)
+  // Class chip listeners
   document.querySelectorAll('.class-chip').forEach(chip => {
     chip.addEventListener('click', () => {
       document.querySelectorAll('.class-chip').forEach(c => c.classList.remove('active'));
@@ -114,10 +173,8 @@
   newQBtn.addEventListener('click', () => startNewQuestion(!!activeQuest));
   submitBtn.addEventListener('click', () => lockIn(getSelected()));
 
-  // ========== UTILS ==========
-  function randInt(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-  }
+  // ---------- UTILS ----------
+  function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
   function shuffle(arr) {
     for (let i = arr.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -126,7 +183,7 @@
     return arr;
   }
 
-  // ========== QUESTION GENERATORS ==========
+  // ---------- QUESTION GENERATORS ----------
   function genArithmetic(level) {
     let a, b, op, text, result;
     if (level === "3") {
@@ -180,63 +237,59 @@
   }
 
   function genAreaRectangle() {
-    const l = randInt(2, 15);
-    const w = randInt(2, 15);
+    const l = randInt(2, 15), w = randInt(2, 15);
     const area = l * w;
-    const text = `Find the area of a rectangle with length ${l} and width ${w}`;
-    const solutionSteps = `Area = length × width = ${l} × ${w} = ${area}`;
-    return { text, correct: String(area), solutionSteps };
+    return { text: `Find the area of a rectangle with length ${l} and width ${w}`, correct: String(area), solutionSteps: `Area = length × width = ${l} × ${w} = ${area}` };
   }
 
   function genAreaTriangle() {
-    const base = randInt(2, 15);
-    const height = randInt(2, 15);
+    const base = randInt(2, 15), height = randInt(2, 15);
     const area = (base * height) / 2;
-    const text = `Find the area of a triangle with base ${base} and height ${height}`;
-    const solutionSteps = `Area = (base × height) / 2 = (${base} × ${height}) / 2 = ${area}`;
-    return { text, correct: String(area), solutionSteps };
+    return { text: `Find the area of a triangle with base ${base} and height ${height}`, correct: String(area), solutionSteps: `Area = (base × height) / 2 = (${base} × ${height}) / 2 = ${area}` };
   }
 
   function genAreaCircle() {
     const r = randInt(2, 10);
     const area = Math.round(Math.PI * r * r * 100) / 100;
-    const text = `Find the area of a circle with radius ${r} (π ≈ 3.14)`;
-    const solutionSteps = `Area = π × r² ≈ 3.14 × ${r}² = 3.14 × ${r * r} = ${area}`;
-    return { text, correct: String(area), solutionSteps };
+    return { text: `Find the area of a circle with radius ${r} (π ≈ 3.14)`, correct: String(area), solutionSteps: `Area = π × r² ≈ 3.14 × ${r}² = 3.14 × ${r * r} = ${area}` };
   }
 
   function genFractionAdd() {
-    const denom1 = randInt(2, 8);
-    const denom2 = randInt(2, 8);
-    const num1 = randInt(1, denom1 - 1);
-    const num2 = randInt(1, denom2 - 1);
+    const denom1 = randInt(2, 8), denom2 = randInt(2, 8);
+    const num1 = randInt(1, denom1 - 1), num2 = randInt(1, denom2 - 1);
     const lcm = denom1 * denom2;
-    const newNum1 = num1 * denom2;
-    const newNum2 = num2 * denom1;
-    const sumNum = newNum1 + newNum2;
-    const text = `${num1}/${denom1} + ${num2}/${denom2}`;
-    const correct = `${sumNum}/${lcm}`;
-    const solutionSteps = `Find common denominator (${lcm})\n` +
-      `${num1}/${denom1} = ${newNum1}/${lcm}, ${num2}/${denom2} = ${newNum2}/${lcm}\n` +
-      `Sum = ${sumNum}/${lcm}`;
-    return { text, correct, solutionSteps };
+    const sumNum = num1 * denom2 + num2 * denom1;
+    return { text: `${num1}/${denom1} + ${num2}/${denom2}`, correct: `${sumNum}/${lcm}`, solutionSteps: `Common denominator: ${lcm}\n${num1}/${denom1} = ${num1 * denom2}/${lcm}\n${num2}/${denom2} = ${num2 * denom1}/${lcm}\nSum = ${sumNum}/${lcm}` };
   }
 
   function genPercent() {
-    const total = randInt(50, 200);
-    const percent = randInt(10, 90);
+    const total = randInt(50, 200), percent = randInt(10, 90);
     const result = (total * percent) / 100;
-    const text = `What is ${percent}% of ${total}?`;
-    const correct = String(result);
-    const solutionSteps = `${percent}% of ${total} = (${percent} / 100) × ${total} = ${result}`;
-    return { text, correct, solutionSteps };
+    return { text: `What is ${percent}% of ${total}?`, correct: String(result), solutionSteps: `${percent}% of ${total} = (${percent} / 100) × ${total} = ${result}` };
   }
 
-  // ========== QUESTION BUILDING ==========
+  // Question pool mapping
+  const questionPools = {
+    "3": [{ topic: 'arithmetic', weight: 3 }, { topic: 'area-rectangle', weight: 1 }],
+    "5": [{ topic: 'arithmetic', weight: 3 }, { topic: 'area-rectangle', weight: 1 }, { topic: 'area-triangle', weight: 1 }, { topic: 'fractions', weight: 2 }],
+    "8": [{ topic: 'linear', weight: 3 }, { topic: 'area-circle', weight: 1 }, { topic: 'area-triangle', weight: 1 }, { topic: 'percentages', weight: 2 }, { topic: 'quadratic', weight: 1 }],
+    "10": [{ topic: 'quadratic', weight: 3 }, { topic: 'linear', weight: 2 }, { topic: 'percentages', weight: 2 }, { topic: 'area-circle', weight: 1 }]
+  };
+
   function buildQuestion(topic, level) {
-    const generator = getGeneratorForTopic(topic);
+    const generator = {
+      arithmetic: genArithmetic,
+      'area-rectangle': genAreaRectangle,
+      'area-triangle': genAreaTriangle,
+      'area-circle': genAreaCircle,
+      fractions: genFractionAdd,
+      percentages: genPercent,
+      linear: genLinear,
+      quadratic: genQuadratic
+    }[topic];
     const q = generator(level);
 
+    // Distractors
     let opts;
     if (q.correct.includes(",")) {
       const optsSet = new Set([q.correct]);
@@ -268,38 +321,12 @@
     if (!questMode && !currentClass) return;
     clearInterval(timerId);
 
-    let topic;
-    let level;
+    let topic, level;
     if (questMode && activeQuest) {
       topic = activeQuest.topic;
       level = activeQuest.classLevel;
     } else {
-      const pools = {
-        "3": [
-          { topic: 'arithmetic', weight: 3 },
-          { topic: 'area-rectangle', weight: 1 }
-        ],
-        "5": [
-          { topic: 'arithmetic', weight: 3 },
-          { topic: 'area-rectangle', weight: 1 },
-          { topic: 'area-triangle', weight: 1 },
-          { topic: 'fractions', weight: 2 }
-        ],
-        "8": [
-          { topic: 'linear', weight: 3 },
-          { topic: 'area-circle', weight: 1 },
-          { topic: 'area-triangle', weight: 1 },
-          { topic: 'percentages', weight: 2 },
-          { topic: 'quadratic', weight: 1 }
-        ],
-        "10": [
-          { topic: 'quadratic', weight: 3 },
-          { topic: 'linear', weight: 2 },
-          { topic: 'percentages', weight: 2 },
-          { topic: 'area-circle', weight: 1 }
-        ]
-      };
-      const pool = pools[currentClass] || pools["3"];
+      const pool = questionPools[currentClass] || questionPools["3"];
       const totalWeight = pool.reduce((sum, item) => sum + item.weight, 0);
       let rand = Math.random() * totalWeight;
       let chosenTopic = pool[0].topic;
@@ -378,28 +405,7 @@
     else if (timeLeft <= 10) torchFill.classList.add('warn');
   }
 
-  // ----- Storage Helpers -----
-  function getUnlockedLocations() {
-    return JSON.parse(localStorage.getItem('unlockedLocations')) || [];
-  }
-  function unlockLocation(locationId) {
-    let unlocked = getUnlockedLocations();
-    if (!unlocked.includes(locationId)) {
-      unlocked.push(locationId);
-      localStorage.setItem('unlockedLocations', JSON.stringify(unlocked));
-    }
-  }
-  function getDiscoveredCreatures() {
-    return JSON.parse(localStorage.getItem('discoveredCreatures')) || [];
-  }
-  function discoverCreature(creatureName) {
-    let creatures = getDiscoveredCreatures();
-    if (!creatures.includes(creatureName)) {
-      creatures.push(creatureName);
-      localStorage.setItem('discoveredCreatures', JSON.stringify(creatures));
-    }
-  }
-
+  // ---------- LOCK IN ANSWER ----------
   function lockIn(selected, timedOut) {
     if (locked) return;
     locked = true;
@@ -416,52 +422,45 @@
     history.push(isCorrect ? 1 : 0);
     renderTrail();
 
-    // Quest mode handling
-    if (activeQuest) {
-      if (isCorrect) {
-        activeQuest.correctCount++;
-        sessionScore += 1;
-        totalCoins += 1;
-        scoreText.textContent = sessionScore;
-        totalCoinsText.textContent = totalCoins;
-        localStorage.setItem('mathQuestTotalCoins', totalCoins);
+    if (isCorrect) {
+      sessionScore += 1;
+      totalCoins += 1;
+      scoreText.textContent = sessionScore;
+      totalCoinsText.textContent = totalCoins;
+      localStorage.setItem('mathQuestTotalCoins', totalCoins);
+      feedback.textContent = "🎉 Correct! +1 coin";
+      chestZone.innerHTML = '<span class="pop">🎁✨🪙</span>';
 
+      // Sound + balloons
+      playSound('correct');
+      spawnBalloons(5);
+
+      // Check for new creature unlock
+      checkCoinUnlocks();
+
+      // Quest progress (if active)
+      if (activeQuest) {
+        activeQuest.correctCount++;
         if (activeQuest.correctCount >= activeQuest.chainLength) {
-          // Quest completed!
-          feedback.textContent = `🎉 Quest complete! You unlocked ${activeQuest.creature.name}!`;
-          chestZone.innerHTML = '<span class="pop">🏆✨🪙</span>';
           unlockLocation(activeQuest.locationId);
-          discoverCreature(activeQuest.creature.name);
+          feedback.textContent += " Quest complete!";
           setTimeout(() => {
-            alert(`You've discovered ${activeQuest.creature.name}! Check your Field Guide.`);
+            alert("You've completed the quest and earned a treasure piece!");
             window.location.href = 'map.html';
           }, 1000);
           return;
         } else {
-          feedback.textContent = `✅ Correct! (${activeQuest.correctCount}/${activeQuest.chainLength})`;
-          chestZone.innerHTML = '<span class="pop">✨🪙</span>';
+          feedback.textContent += ` (${activeQuest.correctCount}/${activeQuest.chainLength})`;
         }
-      } else {
-        feedback.textContent = `❌ Not quite — the answer was ${correctAnswer}. Keep going!`;
-        chestZone.innerHTML = '<span class="pop">🔒</span>';
+        questProgressDiv.textContent = `Quest: ${activeQuest.correctCount} / ${activeQuest.chainLength} solved`;
       }
-      questProgressDiv.textContent = `Quest: ${activeQuest.correctCount} / ${activeQuest.chainLength} solved`;
     } else {
-      // Free play mode
-      if (isCorrect) {
-        sessionScore += 1;
-        totalCoins += 1;
-        scoreText.textContent = sessionScore;
-        totalCoinsText.textContent = totalCoins;
-        localStorage.setItem('mathQuestTotalCoins', totalCoins);
-        feedback.textContent = "🎉 Correct! +1 coin";
-        chestZone.innerHTML = '<span class="pop">🎁✨🪙</span>';
-      } else if (timedOut && !selected) {
+      playSound('wrong');
+      chestZone.innerHTML = '<span class="pop">🔒</span>';
+      if (timedOut && !selected) {
         feedback.textContent = `⏰ Time's up! The answer was ${correctAnswer}`;
-        chestZone.innerHTML = '<span class="pop">🔒</span>';
       } else {
         feedback.textContent = `❌ Not quite — the answer was ${correctAnswer}`;
-        chestZone.innerHTML = '<span class="pop">🔒</span>';
         qText.parentElement.parentElement.classList.add('shake');
         setTimeout(() => qText.parentElement.parentElement.classList.remove('shake'), 400);
       }
@@ -484,14 +483,59 @@
     });
   }
 
-  // ========== LIVING JUNGLE ==========
+  // ---------- MAP LOGIC ----------
+  const MAP_LOCATIONS = [
+    { id: 'crystal-cave', name: 'Crystal Cave', icon: '💎', classLevel: '3', topic: 'arithmetic', chainLength: 5 },
+    { id: 'muddy-swamp', name: 'Muddy Swamp', icon: '🐸', classLevel: '3', topic: 'area-rectangle', chainLength: 5 },
+    { id: 'vine-bridge', name: 'Vine Bridge', icon: '🌿', classLevel: '5', topic: 'fractions', chainLength: 5 },
+    { id: 'sky-temple', name: 'Sky Temple', icon: '🏛️', classLevel: '5', topic: 'area-triangle', chainLength: 5 },
+    { id: 'echoing-gorge', name: 'Echoing Gorge', icon: '🏞️', classLevel: '8', topic: 'linear', chainLength: 5 },
+    { id: 'volcano-peak', name: 'Volcano Peak', icon: '🌋', classLevel: '8', topic: 'percentages', chainLength: 5 },
+    { id: 'ancient-library', name: 'Ancient Library', icon: '📚', classLevel: '10', topic: 'quadratic', chainLength: 5 },
+    { id: 'star-observatory', name: 'Star Observatory', icon: '🔭', classLevel: '10', topic: 'area-circle', chainLength: 5 }
+  ];
+
+  function getUnlockedLocations() {
+    const stored = localStorage.getItem('unlockedLocations');
+    return stored ? JSON.parse(stored) : ['crystal-cave'];
+  }
+  function unlockLocation(locationId) {
+    let unlocked = getUnlockedLocations();
+    if (!unlocked.includes(locationId)) {
+      unlocked.push(locationId);
+      localStorage.setItem('unlockedLocations', JSON.stringify(unlocked));
+    }
+  }
+
+  // Active quest from map
+  let activeQuest = null;
+  const urlParams = new URLSearchParams(window.location.search);
+  const mapNodeId = urlParams.get('mapNode');
+  if (mapNodeId) {
+    const location = MAP_LOCATIONS.find(loc => loc.id === mapNodeId);
+    if (location) {
+      activeQuest = {
+        locationId: location.id,
+        chainLength: location.chainLength,
+        topic: location.topic,
+        correctCount: 0,
+        classLevel: location.classLevel
+      };
+      document.querySelector('.class-picker').style.display = 'none';
+      qText.textContent = `Quest: ${location.name} - Solve 5 ${location.topic} problems!`;
+      startNewQuestion(true);
+    }
+  } else {
+    document.querySelector('.class-picker').style.display = '';
+    qText.textContent = 'Pick a class to start practicing!';
+  }
+
+  // Living jungle
   function updateJungleScene() {
     const scene = document.getElementById('jungleScene');
     if (!scene) return;
     scene.innerHTML = '';
-
     const unlockedCount = getUnlockedLocations().length;
-
     const elements = [];
     if (totalCoins >= 5) elements.push({ emoji: '🌿', left: '10%', top: '20%', size: '3rem' });
     if (totalCoins >= 10) elements.push({ emoji: '🌺', left: '80%', top: '15%', size: '2.5rem' });
@@ -503,7 +547,6 @@
     if (unlockedCount >= 4) elements.push({ emoji: '🌴', left: '90%', top: '5%', size: '4rem' });
     if (unlockedCount >= 6) elements.push({ emoji: '🌈', left: '40%', top: '80%', size: '3rem' });
     if (totalCoins >= 50) elements.push({ emoji: '🏆', left: '5%', top: '50%', size: '3rem' });
-
     elements.forEach(el => {
       const div = document.createElement('div');
       div.className = 'jungle-element show';
@@ -515,13 +558,11 @@
       scene.appendChild(div);
     });
   }
-
-  // Call on load (practice page)
   if (document.getElementById('jungleScene')) {
     updateJungleScene();
   }
 
-  // ========== MAP PAGE RENDERING ==========
+  // Map rendering functions (used if map.html loads this script)
   window.renderMap = function() {
     const grid = document.getElementById('mapGrid');
     if (!grid) return;
@@ -535,15 +576,12 @@
         <div class="icon">${loc.icon}</div>
         <div class="label">${loc.name}</div>
         <div class="status-icon">${isUnlocked ? '🔓' : '🔒'}</div>
+        ${!isUnlocked ? '<div class="req">5 ✅</div>' : ''}
       `;
       if (!isUnlocked) {
-        node.addEventListener('click', () => {
-          alert('Solve the puzzle chain to unlock this location!');
-        });
+        node.addEventListener('click', () => alert('Complete the previous location to unlock this one.'));
       } else {
-        node.addEventListener('click', () => {
-          window.location.href = `practice.html?mapNode=${loc.id}`;
-        });
+        node.addEventListener('click', () => window.location.href = `practice.html?mapNode=${loc.id}`);
       }
       grid.appendChild(node);
     });
@@ -553,33 +591,29 @@
     const container = document.getElementById('treasureStatus');
     if (!container) return;
     const unlocked = getUnlockedLocations();
-    const totalPieces = MAP_LOCATIONS.length;
+    const total = MAP_LOCATIONS.length;
     const collected = unlocked.length;
-    const piecesHTML = Array.from({ length: totalPieces }, (_, i) => {
-      return `<div class="piece ${i < collected ? 'collected' : ''}"></div>`;
-    }).join('');
+    const piecesHTML = Array.from({ length: total }, (_, i) => `<div class="piece ${i < collected ? 'collected' : ''}"></div>`).join('');
     container.innerHTML = `
       <h3>🗝️ Treasure Map Pieces</h3>
       <div class="treasure-pieces">${piecesHTML}</div>
-      <p>${collected}/${totalPieces} collected</p>
-      ${collected === totalPieces ? '<p>🎉 You found the complete treasure! The jungle thanks you!</p>' : ''}
+      <p>${collected}/${total} collected (creatures are unlocked by coins!)</p>
+      ${collected === total ? '<p>🎉 You found the complete treasure! The jungle thanks you!</p>' : ''}
     `;
   };
 
-  // ========== FIELD GUIDE RENDERING ==========
   window.renderFieldGuide = function() {
     const grid = document.getElementById('guideGrid');
     if (!grid) return;
     const discovered = getDiscoveredCreatures();
-    const allCreatures = MAP_LOCATIONS.map(loc => loc.creature);
     grid.innerHTML = '';
-    allCreatures.forEach(creature => {
+    CREATURE_THRESHOLDS.forEach(creature => {
       const isDiscovered = discovered.includes(creature.name);
       const card = document.createElement('div');
       card.className = 'guide-card' + (isDiscovered ? ' discovered' : '');
       card.innerHTML = `
         <div class="creature-img">${isDiscovered ? creature.emoji : '❓'}</div>
-        <div class="creature-name">${isDiscovered ? creature.name : '???'}</div>
+        <div class="creature-name">${isDiscovered ? creature.name : `${creature.coins} 🪙`}</div>
         ${isDiscovered ? `<div class="creature-fact">${creature.fact}</div>` : ''}
       `;
       grid.appendChild(card);

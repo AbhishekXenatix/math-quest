@@ -29,7 +29,7 @@
 
   <main class="map-container">
     <h2 style="text-align:center; font-family: 'Fredoka', sans-serif; color: var(--primary-dark);">🗺️ Quest Map</h2>
-    <p style="text-align:center;">Choose a location to begin a puzzle chain. Complete it to unlock a Treasure Piece and discover a creature!</p>
+    <p style="text-align:center;">Complete a location’s 5-question chain to earn a treasure piece.<br><strong>Creatures are unlocked by earning coins!</strong></p>
     <div id="mapGrid" class="map-grid"></div>
     <div id="treasureStatus" style="text-align:center; margin-top: 2rem;"></div>
   </main>
@@ -40,14 +40,14 @@
 
   <script>
     const MAP_LOCATIONS = [
-      { id: 'crystal-cave', name: 'Crystal Cave', icon: '💎', classLevel: '3', topic: 'arithmetic', chainLength: 5, creature: { name: 'Glowbat', emoji: '🦇', fact: 'This bat uses echolocation to find prime numbers!' } },
-      { id: 'muddy-swamp', name: 'Muddy Swamp', icon: '🐸', classLevel: '3', topic: 'area-rectangle', chainLength: 5, creature: { name: 'Mudpuppy', emoji: '🐶', fact: 'It can sense right angles with its whiskers!' } },
-      { id: 'vine-bridge', name: 'Vine Bridge', icon: '🌿', classLevel: '5', topic: 'fractions', chainLength: 5, creature: { name: 'Vine Snake', emoji: '🐍', fact: 'Its scales are perfect fractals.' } },
-      { id: 'sky-temple', name: 'Sky Temple', icon: '🏛️', classLevel: '5', topic: 'area-triangle', chainLength: 5, creature: { name: 'Sun Phoenix', emoji: '🐦‍🔥', fact: 'Rebirths when you solve a geometry problem.' } },
-      { id: 'echoing-gorge', name: 'Echoing Gorge', icon: '🏞️', classLevel: '8', topic: 'linear', chainLength: 5, creature: { name: 'Echo Fox', emoji: '🦊', fact: 'It repeats your answer, then tells you if it’s right.' } },
-      { id: 'volcano-peak', name: 'Volcano Peak', icon: '🌋', classLevel: '8', topic: 'percentages', chainLength: 5, creature: { name: 'Lavahorn', emoji: '🐲', fact: 'It can calculate the percent of lava in its belly.' } },
-      { id: 'ancient-library', name: 'Ancient Library', icon: '📚', classLevel: '10', topic: 'quadratic', chainLength: 5, creature: { name: 'Bookwyrm', emoji: '🐉', fact: 'It eats quadratic equations for breakfast.' } },
-      { id: 'star-observatory', name: 'Star Observatory', icon: '🔭', classLevel: '10', topic: 'area-circle', chainLength: 5, creature: { name: 'Celestial Turtle', emoji: '🐢', fact: 'Its shell contains a map of the stars.' } }
+      { id: 'crystal-cave', name: 'Crystal Cave', icon: '💎', classLevel: '3', topic: 'arithmetic', chainLength: 5 },
+      { id: 'muddy-swamp', name: 'Muddy Swamp', icon: '🐸', classLevel: '3', topic: 'area-rectangle', chainLength: 5 },
+      { id: 'vine-bridge', name: 'Vine Bridge', icon: '🌿', classLevel: '5', topic: 'fractions', chainLength: 5 },
+      { id: 'sky-temple', name: 'Sky Temple', icon: '🏛️', classLevel: '5', topic: 'area-triangle', chainLength: 5 },
+      { id: 'echoing-gorge', name: 'Echoing Gorge', icon: '🏞️', classLevel: '8', topic: 'linear', chainLength: 5 },
+      { id: 'volcano-peak', name: 'Volcano Peak', icon: '🌋', classLevel: '8', topic: 'percentages', chainLength: 5 },
+      { id: 'ancient-library', name: 'Ancient Library', icon: '📚', classLevel: '10', topic: 'quadratic', chainLength: 5 },
+      { id: 'star-observatory', name: 'Star Observatory', icon: '🔭', classLevel: '10', topic: 'area-circle', chainLength: 5 }
     ];
 
     function getUnlockedLocations() {
@@ -72,10 +72,11 @@
           <div class="icon">${loc.icon}</div>
           <div class="label">${loc.name}</div>
           <div class="status-icon">${isUnlocked ? '🔓' : '🔒'}</div>
+          ${!isUnlocked ? '<div class="req">5 ✅</div>' : ''}
         `;
         if (!isUnlocked) {
           node.addEventListener('click', () => {
-            alert('Solve the puzzle chain to unlock this location!');
+            alert('Complete the previous location to unlock this one.');
           });
         } else {
           node.addEventListener('click', () => {
@@ -97,7 +98,7 @@
       container.innerHTML = `
         <h3>🗝️ Treasure Map Pieces</h3>
         <div class="treasure-pieces">${piecesHTML}</div>
-        <p>${collected}/${totalPieces} collected</p>
+        <p>${collected}/${totalPieces} collected (creatures are unlocked by coins!)</p>
         ${collected === totalPieces ? '<p>🎉 You found the complete treasure! The jungle thanks you!</p>' : ''}
       `;
     }
