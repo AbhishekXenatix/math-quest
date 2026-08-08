@@ -29,7 +29,8 @@
 
   <main class="guide-container">
     <h2 style="text-align:center; font-family: 'Fredoka', sans-serif;">📖 Explorer’s Field Guide</h2>
-    <p style="text-align:center;">Unlock locations to discover these rare jungle creatures.</p>
+    <p style="text-align:center;">Unlock locations on the map to discover these rare jungle creatures.</p>
+    <div id="emptyMessage" style="text-align:center; margin:2rem; font-size:1.1rem;"></div>
     <div id="guideGrid" class="guide-grid"></div>
   </main>
 
@@ -55,7 +56,16 @@
 
     function renderFieldGuide() {
       const grid = document.getElementById('guideGrid');
+      const emptyMsg = document.getElementById('emptyMessage');
       const discovered = getDiscoveredCreatures();
+
+      // Show a friendly message if nothing discovered
+      if (discovered.length === 0) {
+        emptyMsg.innerHTML = '🌿 You haven’t discovered any creatures yet.<br>Complete a puzzle chain on the <a href="map.html">Quest Map</a> to find your first one!';
+      } else {
+        emptyMsg.innerHTML = `You’ve discovered ${discovered.length} of ${CREATURES.length} creatures. Keep exploring!`;
+      }
+
       grid.innerHTML = '';
       CREATURES.forEach(creature => {
         const isDiscovered = discovered.includes(creature.name);
