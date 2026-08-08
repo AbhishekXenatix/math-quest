@@ -39,7 +39,6 @@
   </footer>
 
   <script>
-    // ----- Creature & Location data -----
     const MAP_LOCATIONS = [
       { id: 'crystal-cave', name: 'Crystal Cave', icon: '💎', classLevel: '3', topic: 'arithmetic', chainLength: 5, creature: { name: 'Glowbat', emoji: '🦇', fact: 'This bat uses echolocation to find prime numbers!' } },
       { id: 'muddy-swamp', name: 'Muddy Swamp', icon: '🐸', classLevel: '3', topic: 'area-rectangle', chainLength: 5, creature: { name: 'Mudpuppy', emoji: '🐶', fact: 'It can sense right angles with its whiskers!' } },
@@ -51,18 +50,16 @@
       { id: 'star-observatory', name: 'Star Observatory', icon: '🔭', classLevel: '10', topic: 'area-circle', chainLength: 5, creature: { name: 'Celestial Turtle', emoji: '🐢', fact: 'Its shell contains a map of the stars.' } }
     ];
 
-    // ----- Helpers (localStorage) -----
     function getUnlockedLocations() {
       const stored = localStorage.getItem('unlockedLocations');
       if (!stored) {
-        // First time visitor: unlock Crystal Cave automatically
+        // First visit: unlock Crystal Cave automatically
         localStorage.setItem('unlockedLocations', '["crystal-cave"]');
         return ['crystal-cave'];
       }
       return JSON.parse(stored);
     }
 
-    // ----- Render map grid -----
     function renderMap() {
       const grid = document.getElementById('mapGrid');
       const unlocked = getUnlockedLocations();
@@ -105,7 +102,6 @@
       `;
     }
 
-    // Render on page load
     renderMap();
     renderTreasureStatus();
   </script>

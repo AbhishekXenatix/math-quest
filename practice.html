@@ -9,7 +9,6 @@
   <link rel="stylesheet" href="math-quest.css">
 </head>
 <body>
-  <!-- Header -->
   <header class="main-header">
     <div class="header-inner">
       <div class="brand">
@@ -28,12 +27,10 @@
     </div>
   </header>
 
-  <!-- Jungle scene (living environment) -->
+  <!-- Jungle scene -->
   <div id="jungleScene" class="jungle-scene"></div>
 
-  <!-- Game container -->
   <div class="wrap">
-    <!-- Theme toggle + HUD -->
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 18px; flex-wrap:wrap; gap:10px;">
       <button id="themeToggle" class="btn btn-secondary">🌿 Switch to Jungle</button>
       <div class="hud" style="display:flex; gap:12px;">
@@ -43,13 +40,19 @@
       </div>
     </div>
 
-    <div class="class-picker" id="classPicker" style="display:none;"></div> <!-- Hidden during map quests -->
+    <!-- Class picker (visible by default now) -->
+    <div class="class-picker" id="classPicker">
+      <button class="class-chip" data-class="3">Class 3</button>
+      <button class="class-chip" data-class="5">Class 5</button>
+      <button class="class-chip" data-class="8">Class 8</button>
+      <button class="class-chip" data-class="10">Class 10</button>
+    </div>
 
     <div class="torch-track"><div class="torch-fill" id="torchFill"></div></div>
 
     <div class="scroll-card">
       <div>
-        <div class="q-text" id="qText">Pick a location on the map to begin a quest!</div>
+        <div class="q-text" id="qText">Pick a class to start practicing!</div>
       </div>
     </div>
 
