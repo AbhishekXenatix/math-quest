@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Math Quest – Map</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="math-quest.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="main-header">
+    <div class="header-inner">
+      <div class="brand">
+        <span class="mascot">🦊</span>
+        <div>
+          <h1>Math Quest</h1>
+          <span class="tag">Explore the jungle, solve puzzles, find treasure!</span>
+        </div>
+      </div>
+      <nav class="nav">
+        <a href="index.html">Home</a>
+        <a href="map.html" class="active">Map</a>
+        <a href="practice.html">Practice</a>
+        <a href="field-guide.html">Field Guide</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Map container -->
+  <main class="map-container">
+    <h2 style="text-align:center; font-family: 'Fredoka', sans-serif; color: var(--primary-dark);">🗺️ Quest Map</h2>
+    <p style="text-align:center;">Choose a location to begin a puzzle chain. Complete it to unlock a Treasure Piece and discover a creature!</p>
+    <div id="mapGrid" class="map-grid"></div>
+    <div id="treasureStatus" style="text-align:center; margin-top: 2rem;"></div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="main-footer">
+    <p>© 2026 Math Quest · Adventure awaits!</p>
+  </footer>
+
+  <script src="math-quest.js"></script>
+  <script>
+    // Render the map on load
+    renderMap();
+    renderTreasureStatus();
+  </script>
+</body>
+</html>
