@@ -1,6 +1,93 @@
-<nav class="nav">
-  <a href="index.html" class="active">Home</a>
-  <a href="map.html">Map</a>
-  <a href="practice.html">Practice</a>
-  <a href="field-guide.html">Field Guide</a>
-</nav>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Math Quest – Home</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="math-quest.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="main-header">
+    <div class="header-inner">
+      <div class="brand">
+        <span class="mascot">🦊</span>
+        <div>
+          <h1>Math Quest</h1>
+          <span class="tag">Explore the jungle, solve puzzles, find treasure!</span>
+        </div>
+      </div>
+      <nav class="nav">
+        <a href="index.html" class="active">Home</a>
+        <a href="map.html">Map</a>
+        <a href="practice.html">Practice</a>
+        <a href="field-guide.html">Field Guide</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <main class="hero">
+    <div class="hero-card">
+      <h2>Welcome, young mathematician!</h2>
+      <p>Sharpen your skills, earn coins, discover creatures, and collect treasure pieces in the deep jungle.</p>
+
+      <div id="loginArea">
+        <div id="welcomeBack" style="display:none;">
+          <p>Welcome back, <strong id="savedName"></strong>!</p>
+          <a href="map.html" class="btn btn-start">🌿 Enter the Jungle</a>
+          <button id="changeNameBtn" class="btn btn-secondary">Change Name</button>
+        </div>
+
+        <div id="nameForm">
+          <label for="nameInput">Enter your name to start your quest:</label>
+          <input type="text" id="nameInput" placeholder="e.g. Alex" maxlength="15">
+          <button id="startBtn" class="btn btn-start">🚀 Enter the Jungle</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="main-footer">
+    <p>© 2026 Math Quest · Learn mathematics the fun way!</p>
+  </footer>
+
+  <script>
+    const savedName = localStorage.getItem('mathQuestName');
+
+    function showWelcomeBack(name) {
+      document.getElementById('welcomeBack').style.display = 'block';
+      document.getElementById('savedName').textContent = name;
+      document.getElementById('nameForm').style.display = 'none';
+    }
+
+    function showNameForm() {
+      document.getElementById('welcomeBack').style.display = 'none';
+      document.getElementById('nameForm').style.display = 'block';
+    }
+
+    if (savedName) {
+      showWelcomeBack(savedName);
+    }
+
+    document.getElementById('startBtn').addEventListener('click', () => {
+      const name = document.getElementById('nameInput').value.trim();
+      if (!name) {
+        alert('Please enter your name first!');
+        return;
+      }
+      localStorage.setItem('mathQuestName', name);
+      window.location.href = 'map.html';
+    });
+
+    document.getElementById('changeNameBtn').addEventListener('click', () => {
+      showNameForm();
+      document.getElementById('nameInput').value = '';
+      document.getElementById('nameInput').focus();
+    });
+  </script>
+</body>
+</html>

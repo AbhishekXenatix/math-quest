@@ -36,7 +36,6 @@
   totalCoinsText.textContent = totalCoins;
 
   // ----- NEW: Quest Map & Puzzle Chains -----
-  // Define locations
   const MAP_LOCATIONS = [
     { id: 'crystal-cave', name: 'Crystal Cave', icon: '💎', classLevel: '3', topic: 'arithmetic', chainLength: 5, creature: { name: 'Glowbat', emoji: '🦇', fact: 'This bat uses echolocation to find prime numbers!' } },
     { id: 'muddy-swamp', name: 'Muddy Swamp', icon: '🐸', classLevel: '3', topic: 'area-rectangle', chainLength: 5, creature: { name: 'Mudpuppy', emoji: '🐶', fact: 'It can sense right angles with its whiskers!' } },
@@ -48,7 +47,7 @@
     { id: 'star-observatory', name: 'Star Observatory', icon: '🔭', classLevel: '10', topic: 'area-circle', chainLength: 5, creature: { name: 'Celestial Turtle', emoji: '🐢', fact: 'Its shell contains a map of the stars.' } }
   ];
 
-  // Map topic to generator category
+  // Map topic to generator function
   function getGeneratorForTopic(topic) {
     switch(topic) {
       case 'arithmetic': return (level) => genArithmetic(level);
@@ -64,7 +63,7 @@
   }
 
   // Active quest state (if started from map)
-  let activeQuest = null; // { locationId, chainLength, topic, correctCount, creature }
+  let activeQuest = null;
   const urlParams = new URLSearchParams(window.location.search);
   const mapNodeId = urlParams.get('mapNode');
 
@@ -83,11 +82,11 @@
       // Hide class picker because topic is fixed
       document.querySelector('.class-picker').style.display = 'none';
       qText.textContent = `Quest: ${location.name} - Solve 5 ${location.topic} problems!`;
-      startNewQuestion(true); // force topic
+      startNewQuestion(true);
     }
   }
 
-  // Theme toggle (unchanged)
+  // Theme toggle
   const themeToggle = document.getElementById('themeToggle');
   const currentTheme = localStorage.getItem('mathQuestTheme') || 'education';
   if (currentTheme === 'jungle') {
@@ -128,7 +127,6 @@
   }
 
   // ========== QUESTION GENERATORS ==========
-  // (same as before, but now they are called explicitly)
   function genArithmetic(level) {
     let a, b, op, text, result;
     if (level === "3") {
@@ -234,12 +232,11 @@
     return { text, correct, solutionSteps };
   }
 
-  // ========== QUESTION BUILDING (supports quest mode) ==========
+  // ========== QUESTION BUILDING ==========
   function buildQuestion(topic, level) {
     const generator = getGeneratorForTopic(topic);
     const q = generator(level);
 
-    // Distractors
     let opts;
     if (q.correct.includes(",")) {
       const optsSet = new Set([q.correct]);
@@ -277,7 +274,6 @@
       topic = activeQuest.topic;
       level = activeQuest.classLevel;
     } else {
-      // Normal free play: weighted pool
       const pools = {
         "3": [
           { topic: 'arithmetic', weight: 3 },
@@ -333,15 +329,12 @@
     updateTorch();
     timerId = setInterval(tick, 1000);
 
-    // Update quest progress text
     if (activeQuest) {
       questProgressDiv.textContent = `Quest: ${activeQuest.correctCount} / ${activeQuest.chainLength} solved`;
     } else {
       questProgressDiv.textContent = '';
     }
   }
-
-  // Rest of the functions (renderOptions, selectOption, getSelected, tick, updateTorch, lockIn) remain mostly the same, but we add quest logic in lockIn.
 
   function renderOptions(options) {
     optionsGrid.innerHTML = "";
@@ -385,7 +378,7 @@
     else if (timeLeft <= 10) torchFill.classList.add('warn');
   }
 
-  // ----- NEW: Creature & Location Storage Helpers -----
+  // ----- Storage Helpers -----
   function getUnlockedLocations() {
     return JSON.parse(localStorage.getItem('unlockedLocations')) || [];
   }
@@ -423,7 +416,7 @@
     history.push(isCorrect ? 1 : 0);
     renderTrail();
 
-    // Handle quest progress
+    // Quest mode handling
     if (activeQuest) {
       if (isCorrect) {
         activeQuest.correctCount++;
@@ -439,25 +432,22 @@
           chestZone.innerHTML = '<span class="pop">🏆✨🪙</span>';
           unlockLocation(activeQuest.locationId);
           discoverCreature(activeQuest.creature.name);
-          // Show treasure piece collected (via map page later)
           setTimeout(() => {
             alert(`You've discovered ${activeQuest.creature.name}! Check your Field Guide.`);
-            // Redirect back to map
             window.location.href = 'map.html';
           }, 1000);
-          return; // exit early
+          return;
         } else {
           feedback.textContent = `✅ Correct! (${activeQuest.correctCount}/${activeQuest.chainLength})`;
           chestZone.innerHTML = '<span class="pop">✨🪙</span>';
         }
       } else {
-        // Wrong answer in quest: no penalty, just continue
         feedback.textContent = `❌ Not quite — the answer was ${correctAnswer}. Keep going!`;
         chestZone.innerHTML = '<span class="pop">🔒</span>';
       }
       questProgressDiv.textContent = `Quest: ${activeQuest.correctCount} / ${activeQuest.chainLength} solved`;
     } else {
-      // Free play mode (unchanged)
+      // Free play mode
       if (isCorrect) {
         sessionScore += 1;
         totalCoins += 1;
@@ -480,7 +470,7 @@
     solutionBox.textContent = currentSolution;
     solutionBox.classList.add('show');
 
-    // Update living jungle (every answer)
+    // Update living jungle
     updateJungleScene();
   }
 
@@ -494,16 +484,14 @@
     });
   }
 
-  // ========== LIVING JUNGLE (Environment grows) ==========
+  // ========== LIVING JUNGLE ==========
   function updateJungleScene() {
     const scene = document.getElementById('jungleScene');
     if (!scene) return;
-    // Clear and rebuild based on totalCoins and unlocked locations
     scene.innerHTML = '';
 
     const unlockedCount = getUnlockedLocations().length;
 
-    // Add base jungle elements that fade in with progress
     const elements = [];
     if (totalCoins >= 5) elements.push({ emoji: '🌿', left: '10%', top: '20%', size: '3rem' });
     if (totalCoins >= 10) elements.push({ emoji: '🌺', left: '80%', top: '15%', size: '2.5rem' });
@@ -528,7 +516,7 @@
     });
   }
 
-  // Call on page load (practice page)
+  // Call on load (practice page)
   if (document.getElementById('jungleScene')) {
     updateJungleScene();
   }
@@ -583,7 +571,6 @@
     const grid = document.getElementById('guideGrid');
     if (!grid) return;
     const discovered = getDiscoveredCreatures();
-    // Combine all creatures from MAP_LOCATIONS
     const allCreatures = MAP_LOCATIONS.map(loc => loc.creature);
     grid.innerHTML = '';
     allCreatures.forEach(creature => {
